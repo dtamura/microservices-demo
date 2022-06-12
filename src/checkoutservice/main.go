@@ -36,6 +36,8 @@ import (
 	pb "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/genproto"
 	money "github.com/GoogleCloudPlatform/microservices-demo/src/checkoutservice/money"
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
+
+	datadog "github.com/DataDog/opencensus-go-exporter-datadog"
 )
 
 const (
@@ -172,9 +174,28 @@ func initStackdriverTracing() {
 	log.Warn("could not initialize Stackdriver exporter after retrying, giving up")
 }
 
+func initDatadogTracing() {
+	svcAddr := os.Getenv("DD_AGENT_HOST")
+	exporter, err := datadog.NewExporter(datadog.Options{
+		Service: os.Getenv("DD_SERVICE"),
+		GlobalTags: map[string]interface{}{
+			"env":     os.Getenv("DD_ENV"),
+			"version": os.Getenv("DD_VERSION"),
+		},
+		TraceAddr: svcAddr + ":8126"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+	trace.RegisterExporter(exporter)
+	log.Info("datadog initialization completed.")
+
+}
+
 func initTracing() {
-	initJaegerTracing()
-	initStackdriverTracing()
+	// initJaegerTracing()
+	// initStackdriverTracing()
+	initDatadogTracing()
 }
 
 func initProfiling(service, version string) {
