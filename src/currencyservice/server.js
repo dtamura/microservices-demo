@@ -34,6 +34,11 @@ if(process.env.DISABLE_TRACING) {
 else {
   console.log("Tracing enabled.")
   require('@google-cloud/trace-agent').start();
+  require("dd-trace").init({
+    tags: {
+      domain: "common",
+    },
+});
 }
 
 if(process.env.DISABLE_DEBUGGER) {
