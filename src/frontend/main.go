@@ -235,7 +235,13 @@ func initTracing(log logrus.FieldLogger) {
 
 func initDatadogTracing(log logrus.FieldLogger) {
 	svcAddr := os.Getenv("DD_AGENT_HOST")
-	exporter, err := datadog.NewExporter(datadog.Options{Service: "frontend", TraceAddr: svcAddr + ":8126"})
+	exporter, err := datadog.NewExporter(datadog.Options{
+		Service: os.Getenv("DD_SERVICE"),
+		GlobalTags: map[string]interface{}{
+			"env":     os.Getenv("DD_ENV"),
+			"version": os.Getenv("DD_VERSION"),
+		},
+		TraceAddr: svcAddr + ":8126"})
 	if err != nil {
 		log.Fatal(err)
 	}
