@@ -36,6 +36,7 @@ import (
 	"contrib.go.opencensus.io/exporter/stackdriver"
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/sirupsen/logrus"
+
 	//  "go.opencensus.io/exporter/jaeger"
 	"go.opencensus.io/plugin/ocgrpc"
 	"go.opencensus.io/stats/view"
@@ -43,6 +44,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	datadog "github.com/DataDog/opencensus-go-exporter-datadog"
 )
 
 var (
@@ -203,9 +206,28 @@ func initStackdriverTracing() {
 	log.Warn("could not initialize Stackdriver exporter after retrying, giving up")
 }
 
+func initDatadogTracing() {
+	svcAddr := os.Getenv("DD_AGENT_HOST")
+	exporter, err := datadog.NewExporter(datadog.Options{
+		Service: os.Getenv("DD_SERVICE"),
+		GlobalTags: map[string]interface{}{
+			"env":     os.Getenv("DD_ENV"),
+			"version": os.Getenv("DD_VERSION"),
+		},
+		TraceAddr: svcAddr + ":8126"})
+	if err != nil {
+		log.Fatal(err)
+	}
+	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
+	trace.RegisterExporter(exporter)
+	log.Info("datadog initialization completed.")
+
+}
+
 func initTracing() {
-	initJaegerTracing()
-	initStackdriverTracing()
+	// initJaegerTracing()
+	// initStackdriverTracing()
+	initDatadogTracing()
 }
 
 func initProfiling(service, version string) {
