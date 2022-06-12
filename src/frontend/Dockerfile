@@ -12,9 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-FROM golang:1.18.3-alpine as builder
-RUN apk add --no-cache ca-certificates git
-RUN apk add build-base
+FROM golang:1.18.3 as builder
+# RUN apk add --no-cache ca-certificates git
+# RUN apk add build-base
 WORKDIR /src
 
 # restore dependencies
@@ -26,9 +26,10 @@ COPY . .
 ARG SKAFFOLD_GO_GCFLAGS
 RUN go build -gcflags="${SKAFFOLD_GO_GCFLAGS}" -o /go/bin/frontend .
 
-FROM alpine as release
-RUN apk add --no-cache ca-certificates \
-    busybox-extras net-tools bind-tools
+# FROM alpine as release
+# RUN apk add --no-cache ca-certificates \
+#     busybox-extras net-tools bind-tools
+FROM gcr.io/distroless/base-debian11
 WORKDIR /src
 COPY --from=builder /go/bin/frontend /src/server
 COPY ./templates ./templates

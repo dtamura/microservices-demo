@@ -33,6 +33,8 @@ import (
 	"go.opencensus.io/stats/view"
 	"go.opencensus.io/trace"
 	"google.golang.org/grpc"
+
+	datadog "github.com/DataDog/opencensus-go-exporter-datadog"
 )
 
 const (
@@ -225,8 +227,21 @@ func initTracing(log logrus.FieldLogger) {
 	// trace.ProbabilitySampler set at the desired probability.
 	trace.ApplyConfig(trace.Config{DefaultSampler: trace.AlwaysSample()})
 
-	initJaegerTracing(log)
-	initStackdriverTracing(log)
+	// initJaegerTracing(log)
+	// initStackdriverTracing(log)
+	initDatadogTracing(log)
+
+}
+
+func initDatadogTracing(log logrus.FieldLogger) {
+	svcAddr := os.Getenv("DD_AGENT_HOST")
+	exporter, err := datadog.NewExporter(datadog.Options{Service: "frontend", TraceAddr: svcAddr + ":8126"})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	trace.RegisterExporter(exporter)
+	log.Info("datadog initialization completed.")
 
 }
 
